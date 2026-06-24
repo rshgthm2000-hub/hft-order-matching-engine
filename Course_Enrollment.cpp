@@ -1,211 +1,312 @@
-#include <bits/stdc++.h>
+// You Do NOT Suppose to Change the Starter Template except the Mentioned Parts.
+// But if you do then I'm not responsible for your failed testcases.
+// It is a Very Easy to do Lab Assignment. Best of Luck...
+
+#include<bits/stdc++.h>
+
 using namespace std;
-class Course;
-class Student
-{
-private:
-    string student_id;
-    string student_name;
-    int year_of_study;
-    set<string> completed_courses;
-    set<string> enrolled_courses;
-    set<char> enrolled_slots;
 
-public:
-    Student()
-    {
-        student_id = "";
-    }
-    Student(string id, string name, int year, set<string> &c)
-    {
-        student_id = id;
-        student_name = name;
-        year_of_study = year;
-        completed_courses = c;
-    }
-    void add_student(map<string, Student> &students)
-    {
-        students[student_id] = *this;
-    }
-    friend class Course;
+struct Order {
+    string user;
+    int qty;
+    double price;
+      int time; 
 };
-class Course
-{
-private:
-    string course_code;
-    string course_name;
-    int no_of_credits;
-    int capacity;
-    set<string> prerequisites;
-    map<int, string> students_enrolled1;
-    map<string, int> students_enrolled2;
-    queue<string> waiting_list;
-    int nos;
-    char slot;
 
+class Book {
 public:
-    Course()
-    {
-        course_code = "";
-    }
-    Course(string cc, string cn, int noc, int cap, set<string> &prereq, char sl)
-    {
-        course_code = cc;
-        course_name = cn;
-        no_of_credits = noc;
-        capacity = cap;
-        prerequisites = prereq;
-        slot = sl;
-        nos = 0;
-    }
-    void add_course(map<string, Course> &courses)
-    {
-        for (auto itr : prerequisites)
-        {
-            if (courses.find(itr) == courses.end())
-            {
-                return;
-            }
-        }
-        courses[course_code] = *this;
-    }
-    bool can_enroll(Student &student, map<string, Student> &students, map<string, Course> &courses)
-    {
-        for (auto i : prerequisites)
-        {
-            if (student.completed_courses.find(i) == student.completed_courses.end())
-                return false;
-        }
-        if (capacity == students_enrolled1.size())
-        {
-            return false;
-        }
-        if (student.enrolled_slots.find(slot) != student.enrolled_slots.end())
-        {
-            return false;
-        }
-        if (student.enrolled_courses.find(course_code) != student.enrolled_courses.end())
-        {
-            return false;
-        }
-        return true;
-    }
-    void enroll_student(Student &student, map<string, Student> &students, map<string, Course> &courses)
-    {
-        if (!can_enroll(student, students, courses))
-        {
-            if (capacity == students_enrolled1.size())
-            {
-                waiting_list.push(student.student_id);
-                return;
-            }
-        }
-        else
-        {
-            nos++;
-            student.enrolled_courses.insert(course_code);
-            students_enrolled1[nos] = student.student_id;
-            students_enrolled2[student.student_id] = nos;
-            student.enrolled_slots.insert(slot);
-        }
-    }
-    void drop(Student &student, map<string, Student> &students, map<string, Course> &courses)
-    {
-        student.enrolled_courses.erase(course_code);
-        int nos1 = students_enrolled2[student.student_id];
-        students_enrolled1.erase(nos1);
-        students_enrolled2.erase(student.student_id);
-        while (!waiting_list.empty())
-        {
-            if (can_enroll(students.find(waiting_list.front())->second, students, courses))
-            {
-                enroll_student(students.find(waiting_list.front())->second, students, courses);
-                waiting_list.pop();
-                break;
-            }
-            else
-            {
-                waiting_list.pop();
-            }
-        }
-    }
-    void print(map<string, Course> &courses)
-    {
-        if (!students_enrolled1.empty())
-        {
-            cout << "Enrolled students in " << course_code << ":\n";
-            for (auto itr : students_enrolled1)
-            {
-                cout << itr.second << " ";
-            }
-            cout << "\n";
-        }
-    }
-    friend class Student;
+    string ticker;
+    vector<Order> buy, sell;
+    Book(string t) : ticker(t) {}
 };
-int main()
-{
-    map<string, Student> students;
-    map<string, Course> courses;
-    int n;
-    cin >> n;
-    for (int i = 0; i < n; i++)
-    {
-        string s;
-        cin >> s;
-        if (s == "add_student")
-        {
-            string s1, s2;
-            int y, n1;
-            cin >> s1 >> s2 >> y >> n1;
-            set<string> cc;
-            for (int j = 0; j < n1; j++)
-            {
-                string s3;
-                cin >> s3;
-                cc.insert(s3);
-            }
-            Student stud(s1, s2, y, cc);
-            stud.add_student(students);
-        }
-        else if (s == "add_course")
-        {
-            string s1, s2;
-            int cre, cap, n1;
-            char sl;
-            cin >> s1 >> s2 >> cre >> cap >> sl >> n1;
-            set<string> prereq;
-            for (int j = 0; j < n1; j++)
-            {
-                string s3;
-                cin >> s3;
-                prereq.insert(s3);
-            }
-            Course cour(s1, s2, cre, cap, prereq, sl);
-            cour.add_course(courses);
-        }
-        else if (s == "enroll")
-        {
-            string s1, s2;
-            cin >> s1 >> s2;
-            if (courses.find(s2) != courses.end() && students.find(s1) != students.end())
-                courses.find(s2)->second.enroll_student(students.find(s1)->second, students, courses);
-        }
-        else if (s == "drop")
-        {
-            string s1, s2;
-            cin >> s1 >> s2;
-            if (courses.find(s2) != courses.end() && students.find(s1) != students.end())
-                courses.find(s2)->second.drop(students.find(s1)->second, students, courses);
-        }
-        else if (s == "print")
-        {
-            string s1;
-            cin >> s1;
-            if (courses.find(s1) != courses.end())
-                courses.find(s1)->second.print(courses);
-            else
-                cout << "Invalid Course " << s1 << endl;
+
+int find_idx(const vector<Book>& comp , const string &s){
+    for(int i =0 ;i < comp.size() ; i++){
+        if(comp[i].ticker == s){
+            return i ;
         }
     }
+    return -1;
+}
+auto comparator (Book &a , Book &b){
+        return a.ticker < b.ticker;
+    };
+void part1() {
+    string file;
+    cin >> file;
+    cin.ignore(1000, '\n');
+    // Write your Solution Below
+    ifstream fil(file);
+    string line;
+    if(!fil.is_open()){
+        cout<<"FIle is not opened\n";
+        return ;
+    }
+    
+    vector<Book>comp;
+    while(getline(fil , line)){
+       stringstream ss(line);
+        string Type,UserName,CompanyTicker,Quantities,Price ;
+        getline(ss ,Type , ',');
+        getline(ss ,UserName , ',');
+        getline(ss ,CompanyTicker , ',');
+        getline(ss ,Quantities , ',');
+        getline(ss ,Price , ',');
+
+        int idx = find_idx(comp , CompanyTicker);
+        if(idx == -1){
+            Book temp(CompanyTicker);
+            if(Type == "BUY"){
+                Order x ;
+                x.user = UserName ;
+                x.qty = stoi(Quantities);
+                x.price = stoi(Price);
+                temp.buy.push_back(x);
+            }
+            else{
+                Order x ;
+                x.user = UserName ;
+                x.qty = stoi(Quantities);
+                x.price = stoi(Price);
+                temp.sell.push_back(x);
+            }
+            comp.push_back(temp);
+        }else{
+            if(Type == "BUY"){
+                Order x;
+                x.user = UserName ;
+                x.qty = stoi(Quantities);
+                x.price = stoi(Price);
+                comp[idx].buy.push_back(x);
+            }else{
+                Order x;
+                 x.user = UserName ;
+                x.qty = stoi(Quantities);
+                x.price = stoi(Price);
+                comp[idx].sell.push_back(x);
+            }
+        }
+    }
+    fil.close();
+    
+    sort(comp.begin() , comp.end() , comparator);
+    for(int i =0 ;i< comp.size() ;i++){
+        cout<<comp[i].ticker<<" "<<comp[i].buy.size() + comp[i].sell.size()<<endl;
+    }
+}
+
+void part2() {
+    string file;
+    cin >> file;
+    // Write your Solution Below
+    vector<string> names;
+    string s;
+    while(cin>>s){
+        names.push_back(s);
+    }
+    cin.ignore(1000, '\n');
+    
+    ifstream fil(file);
+    string line;
+    if(!fil.is_open()){
+        cout<<"FIle is not opened\n";
+        return ;
+    }
+    vector<Book>comp;
+     while(getline(fil , line)){
+        stringstream ss(line);
+        string Type,UserName,CompanyTicker,Quantities,Price ;
+        getline(ss ,Type , ',');
+        getline(ss ,UserName , ',');
+        getline(ss ,CompanyTicker , ',');
+        getline(ss ,Quantities , ',');
+        getline(ss ,Price , ',');
+
+         int idx = find_idx(comp , UserName);
+
+         if(idx == -1){
+            Book temp(UserName);
+            if(Type == "BUY"){
+                Order x ;
+                x.user = CompanyTicker ;
+                x.qty = stoi(Quantities);
+                x.price = stoi(Price);
+                temp.buy.push_back(x);
+            }
+            else{
+                Order x ;
+                x.user = CompanyTicker ;
+                x.qty = stoi(Quantities);
+                x.price = stoi(Price);
+                temp.sell.push_back(x);
+            }
+            comp.push_back(temp);
+        }
+        else{
+            if(Type == "BUY"){
+                Order x;
+                 x.user = CompanyTicker ;
+                x.qty = stoi(Quantities);
+                x.price = stoi(Price);
+                comp[idx].buy.push_back(x);
+            }else{
+                Order x;
+                 x.user = CompanyTicker ;
+                x.qty = stoi(Quantities);
+                x.price = stoi(Price);
+                comp[idx].sell.push_back(x);
+            }
+        }
+     }
+     fil.close();
+     for(int i =0 ;i < names.size() ;i++){
+        int idx =  find_idx(comp , names[i]);
+        if(idx == -1){
+            cout<<names[i]<<" 0\n";
+            continue;
+        }
+        int qnt =0 ;
+        for(int j =0 ;j < comp[idx].buy.size() ;j++){
+            qnt += comp[idx].buy[j].qty;
+        }
+        for(int j =0 ;j < comp[idx].sell.size() ;j++){
+            qnt += comp[idx].sell[j].qty;
+        }
+        cout<<names[i]<<" "<<qnt<<endl;
+     }
+}
+
+void part3() {
+    string filePath = "./actual_output/Q1/CSV/";
+    string YOUR_ROLL_NUMBER = "CS24B010"; // Change with Your Actual Roll Number
+    string fileName;
+    cin >> fileName;
+    string file = filePath + YOUR_ROLL_NUMBER + "/" + fileName;
+    cin.ignore(1000, '\n');
+    // Write your Solution Below
+    ofstream out(file);
+
+    // CSV header
+    out << "Ticker,Seller,Buyer,Qty,Price,Time\n";
+
+    // formatting
+    out << fixed << setprecision(2);
+
+    vector<Book> comp;
+
+    int currentTime = 0;       // transaction time
+    int globalOrderTime = 0;   // order arrival time
+
+    string type;
+
+    while (cin >> type) {
+
+        string username, ticker;
+        int qty;
+        double price;
+
+        cin >> username >> ticker >> qty >> price;
+
+        int idx = find_idx(comp, ticker);
+
+        if (idx == -1) {
+            comp.push_back(Book(ticker));
+            idx = comp.size() - 1;
+        }
+
+        if (type == "BUY") {
+
+            // sort SELL: lowest price first, then earliest time
+            sort(comp[idx].sell.begin(), comp[idx].sell.end(),
+                 [](Order &a, Order &b) {
+                     if (a.price == b.price) return a.time < b.time;
+                     return a.price < b.price;
+                 });
+         int i = 0;
+            while (i < comp[idx].sell.size() && qty > 0) {
+                if (comp[idx].sell[i].price <= price) {
+
+                    int tradedQty = min(qty, comp[idx].sell[i].qty);
+
+                    // log transaction
+                    out << ticker << ","
+                        << comp[idx].sell[i].user << ","
+                        << username << ","
+                        << tradedQty << ","
+                        << comp[idx].sell[i].price << ","
+                        << currentTime++ << "\n";
+
+                    qty -= tradedQty;
+                    comp[idx].sell[i].qty -= tradedQty;
+
+                    if (comp[idx].sell[i].qty == 0)
+                        comp[idx].sell.erase(comp[idx].sell.begin() + i);
+                    else
+                        i++;
+
+                } else break;
+            }
+
+            // remaining BUY order
+            if (qty > 0) {
+                Order x{username, qty, price, globalOrderTime++};
+                comp[idx].buy.push_back(x);
+            }
+        }
+       else { // SELL
+
+            // sort BUY: highest price first, then earliest time
+            sort(comp[idx].buy.begin(), comp[idx].buy.end(),
+                 [](Order &a, Order &b) {
+                     if (a.price == b.price) return a.time < b.time;
+                     return a.price > b.price;
+                 });
+
+            int i = 0;
+            while (i < comp[idx].buy.size() && qty > 0) {
+                if (comp[idx].buy[i].price >= price) {
+
+                    int tradedQty = min(qty, comp[idx].buy[i].qty);
+
+                    // log transaction
+                    out << ticker << ","
+                        << username << ","
+                        << comp[idx].buy[i].user << ","
+                        << tradedQty << ","
+                        << price << ","
+                        << currentTime++ << "\n";
+
+                    qty -= tradedQty;
+                    comp[idx].buy[i].qty -= tradedQty;
+
+                    if (comp[idx].buy[i].qty == 0)
+                        comp[idx].buy.erase(comp[idx].buy.begin() + i);
+                    else
+                        i++;
+
+                } else break;
+            }
+             if (qty > 0) {
+                Order x{username, qty, price, globalOrderTime++};
+                comp[idx].sell.push_back(x);
+            }
+        }
+    }
+
+    out.close();
+     
+}
+
+int main() {
+    string part;
+    cin >> part;
+    
+    if (part == "P1") {
+        part1();
+    } else if (part == "P2") {
+        part2();
+    } else {
+        part3();
+    }
+    return 0;
 }
