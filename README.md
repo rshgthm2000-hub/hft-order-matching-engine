@@ -2,133 +2,86 @@
 
 ## 📌 Overview
 
-This project implements a low-latency trading simulation system in **C++** that models the core mechanics of a High-Frequency Trading (HFT) matching platform. The system processes rapid inbound market data, maintains independent limit order books across multiple stock tickers, executes trades using deterministic matching algorithms, and exports sequential transaction records.
+This project implements a trading simulation system in **C++** that models the mechanics of an exchange matching platform. The system is divided into three distinct execution modules (P1, P2, P3) to handle market data parsing, trader profiling, and a live order-matching engine. 
 
-Designed with data structure efficiency in mind, this engine demonstrates how financial systems utilize priority-based sorting to maximize transaction throughput.
-
----
-
-## 🚀 Features
-
-### 📊 Market Data Analytics
-* **CSV Batch Ingestion:** Parses historical market orders from flat-file formats sequentially.
-* **Ticker Analytics:** Generates real-time, ticker-wise order metrics and volume statistics.
-* **Risk/Exposure Profiling:** Computes trader-level quantity exposure across multiple distinct securities simultaneously.
-
-### ⚙️ Order Matching Engine
-* **Price-Time Priority (FIFO):** Enforces exchange-matching logic where compatible orders are matched by the best price level first, and then by the chronological order arrival sequence.
-* **Multi-Ticker Independent Books:** Dynamically scales independent buy/sell books per isolated equity ticker.
-* **Partial Order Management:** Seamlessly tracks partial order fills, updating resting volumes and leaving remaining balances active in the queue.
-
-### 📝 Trade Execution & Logging
-* **Automated Clearing:** Triggers match executions the instant buy and sell thresholds cross.
-* **Granular Records:** Captures transaction details including Ticker, Buyer ID, Seller ID, Traded Quantity, Execution Price, and Timestamp.
-* **Persistent Auditing:** Exports finalized execution matrices into standard CSV format transaction logs.
+Designed using Standard Template Library (STL) vectors and custom sorting comparators, this engine demonstrates how financial systems evaluate price-time priority to clear trades.
 
 ---
 
-## 🔄 System Workflow
+## 🚀 Execution Modes & Features
 
-```text
-       Market Orders (Inbound Stream / CSV)
-                        │
-                        ▼
-                Order Processing
-                        │
-                        ▼
-             Order Book Management
-         (Independent Ticker Ledgers)
-                        │
-                        ▼
-                 Matching Engine
-          (Price-Time Priority Evaluation)
-                        │
-                        ▼
-                 Trade Execution
-           (Instant Resolution & Fills)
-                        │
-                        ▼
-                Transaction Logs
-             (Output Audit Trail)
-```
+The system operates in three distinct modes based on standard input (`P1`, `P2`, or `P3`):
+
+### **Part 1 (P1): Ticker Analytics**
+* **CSV Batch Ingestion:** Parses historical market orders from a flat CSV file.
+* **Order Counting:** Groups inbound orders by `CompanyTicker`.
+* **Output:** Sorts tickers alphabetically and prints the total number of orders (Buy + Sell) placed for each distinct security.
+
+### **Part 2 (P2): Trader Risk/Exposure Profiling**
+* **Trader-Centric Ledgers:** Repurposes the book structure to group data by `UserName` instead of the ticker.
+* **Quantity Aggregation:** Calculates the total volume (quantity) of shares a specific trader has placed across all their orders.
+* **Targeted Output:** Accepts a list of specific trader names from standard input and outputs their total combined order quantities.
+
+### **Part 3 (P3): Live Order Matching Engine**
+* **Standard Input Stream:** Reads a continuous stream of space-separated market orders (`TYPE USER TICKER QTY PRICE`).
+* **Price-Time Priority (FIFO):** Enforces exchange-matching logic. Compatible orders are matched by the best price level first, and then by the chronological order arrival sequence.
+* **Partial Order Management:** Tracks partial order fills, updating resting volumes and leaving remaining balances active in the queue.
+* **Automated Clearing & Logging:** Triggers executions instantly when buy and sell thresholds cross, logging outputs to a specific formatted CSV file.
 
 ---
 
-## 🎯 Matching Strategy
+## 🔄 P3 Matching Strategy
 
-The engine strictly tracks exchange-style double-auction execution patterns:
-* **Buy Orders:** Instantly matched against the lowest available sell price sitting in the active Ask book.
-* **Sell Orders:** Instantly matched against the highest available buy price sitting in the active Bid book.
-* **Time Ties:** When multiple orders share identical price levels, the matching loop prioritizes the oldest order in the queue.
-* **Fractional Resolution:** Resolves quantity mismatches dynamically, maintaining the unexecuted residual balance in the book while closing the filled portion.
+The matching engine (Part 3) strictly tracks exchange-style double-auction execution patterns:
+* **Buy Orders:** Sorted to match against the lowest available sell price sitting in the active Ask book.
+* **Sell Orders:** Sorted to match against the highest available buy price sitting in the active Bid book.
+* **Time Ties:** When multiple orders share identical price levels, the engine prioritizes the oldest order (tracked via a global incrementing order time variable).
+* **Fractional Resolution:** Resolves quantity mismatches dynamically, deducting the traded amount and retaining the unexecuted residual balance in the vector.
 
 ---
 
 ## 🛠️ Technologies Used
 
 * **Language:** C++
-* **Paradigm:** Object-Oriented Programming (OOP)
-* **Standard Library:** Standard Template Library (STL) Containers and Algorithms
-* **I/O Engine:** Standard File I/O stream handling for transactional serialization
+* **Paradigm:** Procedural & Object-Oriented Programming (OOP)
+* **Standard Library:** Standard Template Library (STL)
+* **File Handling:** `std::ifstream` and `std::ofstream` for data ingestion and transaction serialization.
 
 ---
 
 ## 📊 Data Structures
 
-The engine maps algorithmic requirements to highly optimized memory layouts to reduce matching overhead:
+The engine maps algorithmic requirements using lightweight standard containers:
 
-| Container | System Mapping | Technical Purpose |
-| :--- | :--- | :--- |
-| `std::vector` | `Order_Storage` | Provides cache-friendly sequential memory layout for linear ingestion. |
-| `std::map` | `Ticker_&_Trader_Analytics` | Keeps balance maps sorted dynamically by unique alpha key identifiers. |
-| `std::priority_queue` | `Order_Book_Depth` | Enforces max-heap and min-heap sorting for instant $O(1)$ access to best Bid/Ask layers. |
+| Container / Algorithm | Technical Purpose |
+| :--- | :--- |
+| `std::vector<Book>` | Acts as the main dynamic registry for storing independent tickers (or traders in P2). Searched linearly via a custom `find_idx` function. |
+| `std::vector<Order>` | Maintains the isolated `buy` and `sell` order layers inside each Book. |
+| `std::sort()` | Used dynamically on-the-fly to enforce Price-Time priority right before evaluating potential matches. |
 
 ---
 
-## 📈 Sample Execution
+## 📂 I/O & Project Structure
 
-### Input (`market_orders.csv`)
-```text
-BUY Rajesh INFY 100 2450.00
-SELL Priya INFY 60 2440.00
-```
+The project relies on specific local directory paths for logging executed trades in **Part 3**:
 
-### Output (`executed_trades.csv`)
-```text
+* **Input (`P1` & `P2`):** Reads standard comma-separated lines.
+* **Input (`P3`):** Reads space-separated lines from standard input.
+* **Output (`P3`):** Writes executed trades to `./actual_output/Q1/CSV/CS24B009/[fileName]`
+
+### Sample Output Log (`P3` Executed Trades)
+```csv
 Ticker,Seller,Buyer,Qty,Price,Time
 INFY,Priya,Rajesh,60,2440.00,0
-```
-
----
-
-## 📂 Project Structure
-
-```text
-HFT-Order-Matching-Engine/
-│
-├── src/
-│   └── main.cpp               # Core driver, CSV parser, and matching engine logic
-│
-├── data/
-│   └── market_orders.csv      # Input dataset containing simulated market orders
-│
-├── output/
-│   └── executed_trades.csv    # Generated transaction logs for cleared trades
-│
-└── README.md                  # Project documentation
-```
 
 ---
 
 ## 🧑‍💻 Author
 
-**RISHI GOUTHAM** C++ | Low-Latency Systems | Computer Science Student  
-
-*Developed as part of systems programming and data structures coursework modeling high-throughput electronic market architectures.*
+**RISHI GOUTHAM (CS24B009)** *C++ | Systems Programming | Computer Science Student* > Developed as part of systems programming and data structures coursework modeling electronic market architectures.
 
 ---
 
 ## 📄 License
 
 This project is created for educational and academic simulation purposes under the advanced data structures and software systems curriculum tracks.
-```
