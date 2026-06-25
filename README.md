@@ -37,8 +37,7 @@ The matching engine (Part 3) strictly tracks exchange-style double-auction execu
 * **Sell Orders:** Sorted to match against the highest available buy price sitting in the active Bid book.
 * **Time Ties:** When multiple orders share identical price levels, the engine prioritizes the oldest order (tracked via a global incrementing order time variable).
 * **Fractional Resolution:** Resolves quantity mismatches dynamically, deducting the traded amount and retaining the unexecuted residual balance in the vector.
-
----
+* ---
 
 ## 🛠️ Technologies Used
 
@@ -70,15 +69,19 @@ The project relies on specific local directory paths for logging executed trades
 * **Output (`P3`):** Writes executed trades to `./actual_output/Q1/CSV/CS24B009/[fileName]`
 
 ### Sample Output Log (`P3` Executed Trades)
-```csv
-Ticker,Seller,Buyer,Qty,Price,Time
-INFY,Priya,Rajesh,60,2440.00,0
+
+    Ticker,Seller,Buyer,Qty,Price,Time
+    INFY,Priya,Rajesh,60,2440.00,0
 
 ---
 
 ## 🧑‍💻 Author
 
-**RISHI GOUTHAM (CS24B009)** *C++ | Systems Programming | Computer Science Student* > Developed as part of systems programming and data structures coursework modeling electronic market architectures.
+**RISHI GOUTHAM (CS24B009)**
+
+*C++ | Systems Programming | Computer Science Student*
+
+Developed as part of systems programming and data structures coursework modeling electronic market architectures.
 
 ---
 
