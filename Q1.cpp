@@ -1,9 +1,4 @@
-// You Do NOT Suppose to Change the Starter Template except the Mentioned Parts.
-// But if you do then I'm not responsible for your failed testcases.
-// It is a Very Easy to do Lab Assignment. Best of Luck...
-
 #include<bits/stdc++.h>
-
 using namespace std;
 
 struct Order {
@@ -35,7 +30,7 @@ void part1() {
     string file;
     cin >> file;
     cin.ignore(1000, '\n');
-    // Write your Solution Below
+   
     ifstream fil(file);
     string line;
     if(!fil.is_open()){
@@ -98,7 +93,6 @@ void part1() {
 void part2() {
     string file;
     cin >> file;
-    // Write your Solution Below
     vector<string> names;
     string s;
     while(cin>>s){
@@ -178,12 +172,11 @@ void part2() {
 
 void part3() {
     string filePath = "./actual_output/Q1/CSV/";
-    string YOUR_ROLL_NUMBER = "CS24B010"; // Change with Your Actual Roll Number
+    string YOUR_ROLL_NUMBER = "CS24B009"; 
     string fileName;
     cin >> fileName;
     string file = filePath + YOUR_ROLL_NUMBER + "/" + fileName;
     cin.ignore(1000, '\n');
-    // Write your Solution Below
     ofstream out(file);
 
     // CSV header
